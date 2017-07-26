@@ -188,6 +188,10 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker
                     innerKeySelector: (Guid endpointId) => endpointId,
                     resultSelector: (ServiceEndpoint endpoint, Guid endpointId) => endpoint)
                 .ToList();
+            
+            // Expand endpoint variables
+            endpoints.ForEach(endpoint => ExecutionContext.Variables.ExpandValues(endpoint.Authorization.Parameters));
+            endpoints.ForEach(endpoint => ExecutionContext.Variables.ExpandValues(endpoint.Data));
 
             // Add the system endpoint.
             foreach (ServiceEndpoint endpoint in (ExecutionContext.Endpoints ?? new List<ServiceEndpoint>(0)))
