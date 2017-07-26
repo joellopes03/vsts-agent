@@ -190,7 +190,7 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker
                 .ToList();
             
             // Expand endpoint variables
-            endpoints.ForEach(endpoint => ExecutionContext.Variables.ExpandValues(endpoint.Authorization.Parameters));
+            endpoints.ForEach(endpoint => ExecutionContext.Variables.ExpandValues(endpoint.Authorization?.Parameters));
             endpoints.ForEach(endpoint => ExecutionContext.Variables.ExpandValues(endpoint.Data));
 
             // Add the system endpoint.
