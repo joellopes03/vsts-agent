@@ -187,6 +187,7 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker
                     outerKeySelector: (ServiceEndpoint endpoint) => endpoint.Id,
                     innerKeySelector: (Guid endpointId) => endpointId,
                     resultSelector: (ServiceEndpoint endpoint, Guid endpointId) => endpoint)
+                .Select(item => item.Clone())
                 .ToList();
             
             // Expand endpoint variables
