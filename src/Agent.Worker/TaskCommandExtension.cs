@@ -67,6 +67,10 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker
             {
                 ProcessTaskSetTaskVariableCommand(context, command.Properties, command.Data);
             }
+            else if (String.Equals(command.Event, WellKnownTaskCommand.SetEndpointAuthorizationParameter, StringComparison.OrdinalIgnoreCase))
+            {
+                ProcessTaskSetEndpointAuthorizationParameterCommand(context, command.Properties, command.Data);
+            }
             else if (String.Equals(command.Event, WellKnownTaskCommand.PrependPath, StringComparison.OrdinalIgnoreCase))
             {
                 ProcessTaskPrepandPathCommand(context, command.Data);
@@ -511,6 +515,35 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker
             context.TaskVariables.Set(name, data, isSecret);
         }
 
+        private void ProcessTaskSetEndpointAuthorizationParameterCommand(IExecutionContext context, Dictionary<string, string> eventProperties, string data)
+        {
+            String endpointIdInput;
+            if (!eventProperties.TryGetValue(TaskSetEndpointAuthorizationParameterEventProperties.EndpointId, out endpointIdInput) || String.IsNullOrEmpty(endpointIdInput))
+            {
+                throw new Exception(StringUtil.Loc("MissingEndpointAuthorizationID"));
+            }
+
+            Guid endpointId;
+            if (!Guid.TryParse(endpointIdInput, out endpointId))
+            {
+                throw new Exception(StringUtil.Loc("InvalidEndpointId"));
+            }
+
+            String key;
+            if (!eventProperties.TryGetValue(TaskSetEndpointAuthorizationParameterEventProperties.key, out key) || String.IsNullOrEmpty(key))
+            {
+                throw new Exception(StringUtil.Loc("MissingEndpointAuthorizationKey"));
+            }
+
+            var endpoint = context.Endpoints.Find(a => a.Id == endpointId);
+            if (EqualityComparer<ServiceEndpoint>.Default.Equals(endpoint, default(ServiceEndpoint)))
+            {
+                throw new Exception(StringUtil.Loc("InvalidEndpointId"));
+            }
+
+            endpoint.Authorization.Parameters[key]= data;
+        }
+
         private void ProcessTaskPrepandPathCommand(IExecutionContext context, string data)
         {
             ArgUtil.NotNullOrEmpty(data, nameof(WellKnownTaskCommand.PrependPath));
@@ -553,6 +586,7 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker
         public static readonly String SetProgress = "setprogress";
         public static readonly String SetSecret = "setsecret";
         public static readonly String SetVariable = "setvariable";
+        public static readonly String SetEndpointAuthorizationParameter = "setendpointauthorizationparameter";
         public static readonly String SetTaskVariable = "settaskvariable";
         public static readonly String UploadFile = "uploadfile";
         public static readonly String UploadSummary = "uploadsummary";
@@ -613,5 +647,11 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker
     {
         public static readonly String Variable = "variable";
         public static readonly String IsSecret = "issecret";
+    }
+
+    internal static class TaskSetEndpointAuthorizationParameterEventProperties
+    {
+        public static readonly String EndpointId = "endpointId";
+        public static readonly String key = "key";
     }
 }
